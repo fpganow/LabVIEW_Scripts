@@ -47,11 +47,11 @@ def readFile(fileName):
     return byteArray
 
 def main():
-    print('+----------------------------------------+')
-    print('|  patchBitfile.py                       |')
-    print('|                                        |')
-    print('|  Patch lvbitx file with new .bin file  |')
-    print('+----------------------------------------+')
+    print('+-----------------------------------------+')
+    print('|  patchBitxfile.py                       |')
+    print('|                                         |')
+    print('|  Patch lvbitx file with new .bin file   |')
+    print('+-----------------------------------------+')
     print('')
 
     import argparse
