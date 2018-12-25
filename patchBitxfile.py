@@ -55,7 +55,8 @@ def main():
     print('')
 
     import argparse
-    parser = argparse.ArgumentParser(description='Patch .lvbitx file with new .bin file')
+    parser = argparse.ArgumentParser(
+                      description='Patch .lvbitx file with new .bin file')
     parser.add_argument('lvbitx', default=None, nargs='?',
                                   help="Full path to LabVIEW lvbitx file")
     parser.add_argument('bin', default=None, nargs='?',
@@ -64,7 +65,6 @@ def main():
                                   action='store_true',
                                   help="Assume answer is yes")
     args = parser.parse_args()
-
 
     if args.lvbitx:
         lvbitx = args.lvbitx

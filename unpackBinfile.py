@@ -2,7 +2,7 @@
 
 import sys
 
-def getOnlyBitfile():
+def getOnlyBitxfile():
     mypath= "."
     from os import listdir
     from os.path import isfile, join
@@ -34,11 +34,19 @@ def saveToTxtFile(fileName, txtData):
         fout.write(txtData)
 
 def main():
-    print('Unpack Bin file from lvbitx')
+    print('+-----------------------------------------+')
+    print('|  unpackBinfile.py                       |')
+    print('|                                         |')
+    print('|  Extract .bin file from LabVIEW lvbitx  |')
+    print('|  file with new .bin file                |')
+    print('+-----------------------------------------+')
+    print('')
 
     import argparse
-    parser = argparse.ArgumentParser(description='Unpack .bin file from LabVIEW lvbitx file')
-    parser.add_argument('lvbitx', default=None, nargs='?', help="Full path to LabVIEW lvbitx file")
+    parser = argparse.ArgumentParser(
+                  description='Unpack .bin file from LabVIEW lvbitx file')
+    parser.add_argument('lvbitx', default=None, nargs='?',
+                                  help="Full path to LabVIEW lvbitx file")
     args = parser.parse_args()
 
     if args.lvbitx:
@@ -46,7 +54,7 @@ def main():
         lvbitx = args.lvbitx
     else:
         print('No .lvbitx specified, checking current directory for one')
-        lvbitx = getOnlyBitfile()
+        lvbitx = getOnlyBitxfile()
         if lvbitx:
             print(f'Found a lvbitx file in the current directory: {lvbitx}')
         else:
