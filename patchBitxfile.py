@@ -88,6 +88,8 @@ def main():
         print(f'Patch {lvbitx} file with {binFile}?')
         response = input('Proceed? (Y/n)')
 
+# Offset where bin file starts in bitfile is 0x0a8
+
     if response.upper().strip() != "Y":
         print('Exiting...')
         import sys
