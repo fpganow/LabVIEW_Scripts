@@ -2,10 +2,10 @@
 
 def getUpdateMem():
     import os
-    updateMem = 'C:\\NIFPGA\\programs\\Vivado2017_2\\bin\\updatemem.bat' if os.name == 'nt' else 'linux'
+    updateMem = 'C:\\NIFPGA\\programs\\Vivado2017_2\\bin\\updatemem.bat' if os.name == 'nt' else '/usr/local/natinst/NIFPGA/programs/vivado2017_2/bin/updatemem'
     print(f'Using the following location for updatemem: {updateMem}')
     if not os.path.isfile(updateMem):
-        print("updatemem.bat does not exist")
+        print("updatemem does not exist")
         print('Exiting...')
         import sys
         sys.exit(0)
@@ -27,6 +27,7 @@ def getOnlyBitFile():
     onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".bit")]
     return onlyfiles[0]
 
+# Offset where bin file starts in bitfile is 0x0a8
 def stripBitFileHeader(inBitFile):
     print(f'Stripping Bitfile header from {inBitFile}')
     bitStream = readFile(inBitFile)
@@ -59,8 +60,11 @@ def patch(inElfFile, inBitFile):
                   "-out", outBitFile
                  ]
 
+    print("Running:")
+    print("{}".format( " ".join(commandArr)))
+
     import subprocess
-    proc = subprocess.run(commandArr, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
+    proc = subprocess.run(commandArr, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
     if proc:
         print(f'proc.returncode = {proc.returncode}')
         print('Results')
@@ -150,8 +154,6 @@ def main():
         print(f'Patch {lvbitxFile} file with {elfFile} via {bitFile}?')
         response = input('Proceed? (Y/n)')
 
-# Offset where bin file starts in bitfile is 0x0a8
-
     if response.upper().strip() != "Y":
         print('Exiting...')
         import sys
@@ -164,10 +166,10 @@ def main():
     print(f'Temporary lvbitxFile {outLvbitxFile}')
 
     newBitFile = patch(elfFile, bitFile)
-    #newBitFile = 'PXIe6592R_Top_Gen2x8.mb_lwip_1.elf.bit'
     newBinFile = stripBitFileHeader(newBitFile)
 
     replaceBinstream(lvbitxFile, newBinFile, outLvbitxFile)
+
 
 if __name__ == '__main__':
     main()
