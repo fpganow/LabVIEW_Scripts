@@ -1,11 +1,41 @@
 #!/usr/bin/python3.7
 
-def getOnlyBinFile():
+def getUpdateMem():
+    import os
+    updateMem = 'C:\\NIFPGA\\programs\\Vivado2017_2\\bin\\updatemem.bat' if os.name == 'nt' else 'linux'
+    print(f'Using the following location for updatemem: {updateMem}')
+    if not os.path.isfile(updateMem):
+        print("updatemem.bat does not exist")
+        print('Exiting...')
+        import sys
+        sys.exit(0)
+    return updateMem
+
+def getFile(mypath, expr):
+    from os import listdir
+    from os.path import isfile, join
+    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(expr)]
+    return onlyfiles[0]
+
+def getOnlyElfFile():
+    return getFile('.', '.elf')
+
+def getOnlyBitFile():
     mypath= "."
     from os import listdir
     from os.path import isfile, join
-    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".bin")]
+    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".bit")]
     return onlyfiles[0]
+
+def stripBitFileHeader(inBitFile):
+    print(f'Stripping Bitfile header from {inBitFile}')
+    bitStream = readFile(inBitFile)
+    outBinFile = inBitFile[:-4] + '.bin'
+    fout = open(outBinFile, 'wb')
+    bitStream = bitStream[0xa8:]
+    fout.write(bitStream)
+    fout.close()
+    return outBinFile
 
 def getOnlyBitxFile():
     mypath= "."
@@ -14,13 +44,36 @@ def getOnlyBitxFile():
     onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".lvbitx")]
     return onlyfiles[0]
 
-def replaceBitstream(lvbitx, binFile):
+def patch(inElfFile, inBitFile):
+    updateMem = getUpdateMem()
+    inMmiFile = inBitFile[:-4] + '.mmi'
+    outBitFile = inBitFile[:-3] + inElfFile + '.bit'
+
+    print("Updatemem command found")
+    print(f'Out bit file: {outBitFile}')
+    commandArr = [updateMem,
+                  "-data", inElfFile,
+                  "-bit", inBitFile,
+                  "-proc", "PXIe6592RWindow/theCLIPs/UserRTL_microblaze_CLIP1/d_microblaze_i/microblaze_0",
+                  '-meminfo', inMmiFile,
+                  "-out", outBitFile
+                 ]
+
+    import subprocess
+    proc = subprocess.run(commandArr, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT )
+    if proc:
+        print(f'proc.returncode = {proc.returncode}')
+        print('Results')
+        print('-------')
+        print("proc.stdout = {}".format(proc.stdout.decode('utf-8')))
+    return outBitFile
+
+def replaceBinstream(lvbitx, binFile, outLvbitxFile):
     newBitStream = readFile(binFile)
 
     import hashlib
     m = hashlib.md5()
     m.update(newBitStream)
-    calcMd5 = m.digest()
     newMd5_str = m.hexdigest()
 
     print(f' NEW MD5: {newMd5_str}')
@@ -35,7 +88,7 @@ def replaceBitstream(lvbitx, binFile):
     root = tree.getroot()
     root.find('BitstreamMD5').text = newMd5_str
     root.find('Bitstream').text = dataHexStrSplit
-    tree.write(lvbitx)
+    tree.write(outLvbitxFile)
 
 def saveToFile(fileName, binData):
     binDataArray = bytearray(binData)
@@ -50,56 +103,69 @@ def main():
     print('+-----------------------------------------+')
     print('|  patchBitxfile.py                       |')
     print('|                                         |')
-    print('|  Patch lvbitx file with new .bin file   |')
+    print('|  Patch lvbitx file with new .elf file   |')
     print('+-----------------------------------------+')
     print('')
 
     import argparse
     parser = argparse.ArgumentParser(
-                      description='Patch .lvbitx file with new .bin file')
-    parser.add_argument('lvbitx', default=None, nargs='?',
-                                  help="Full path to LabVIEW lvbitx file")
-    parser.add_argument('bin', default=None, nargs='?',
-                                  help="Full path to Vivado bin file")
+                      description='Patch .lvbitx file with new .elf file')
+    parser.add_argument('--lvbitx', default=None, nargs='?',
+                                  help="Full or relative path to LabVIEW lvbitx file")
+    parser.add_argument('--bit', default=None, nargs='?',
+                                  help="Full or relative path to Vivado bit file")
+    parser.add_argument('--elf', default=None, nargs='?',
+                                  help="Full or relative path to Xilinx SDK elf file")
     parser.add_argument('--no-confirmation', dest='noConfirmation',
                                   action='store_true',
-                                  help="Assume answer is yes")
+                                  help="Do not ask for a confirmation before running patch")
     args = parser.parse_args()
 
     if args.lvbitx:
-        lvbitx = args.lvbitx
+        lvbitxFile = args.lvbitx
     else:
         print('- No .lvbitx file specified, checking current directory for one')
-        lvbitx = getOnlyBitxFile()
-        if lvbitx:
-            print(f'  + Found a lvbitx file in the current directory: {lvbitx}')
-    if args.bin:
-        binFile = args.bin
+        lvbitxFile = getOnlyBitxFile()
+        if lvbitxFile:
+            print(f'  + Found a lvbitx file in the current directory: {lvbitxFile}')
+    if args.bit:
+        bitFile = args.bit
     else:
         print('- No .bin file speciied, checking current directory for one')
-        binFile = getOnlyBinFile()
-        if binFile:
-            print(f'  + Found a bin file in the current directory: {binFile}')
+        bitFile = getOnlyBitFile()
+        if bitFile:
+            print(f'  + Found a bit file in the current directory: {bitFile}')
+    if args.elf:
+        elfFile = args.elf
+    else:
+        print('- No .elf file speciied, checking current directory for one')
+        elfFile = getOnlyElfFile()
+        if elfFile:
+            print(f'  + Found an elf file in the current directory: {elfFile}')
 
     print('')
     if args.noConfirmation:
         response = 'Y'
     else:
-        print(f'Patch {lvbitx} file with {binFile}?')
+        print(f'Patch {lvbitxFile} file with {elfFile} via {bitFile}?')
         response = input('Proceed? (Y/n)')
 
     if response.upper().strip() != "Y":
         print('Exiting...')
         import sys
         sys.exit(0)
+    outLvbitxFile = lvbitxFile[:-6] + '.' + elfFile + '.lvbitx'
 
     print('')
     print('------------------------------------------')
+    print(f'Patch {lvbitxFile} with {elfFile} embedded in to {bitFile}')
+    print(f'Temporary lvbitxFile {outLvbitxFile}')
 
-    replaceBitstream(lvbitx, binFile)
+    newBitFile = patch(elfFile, bitFile)
+    #newBitFile = 'PXIe6592R_Top_Gen2x8.mb_lwip_1.elf.bit'
+    newBinFile = stripBitFileHeader(newBitFile)
 
-    # updatemem -data lwip_exercisor2.elf -bit unpacked.bit -proc d_microblaze_i/microblaze -out patched.bit
+    replaceBinstream(lvbitxFile, newBinFile, outLvbitxFile)
 
 if __name__ == '__main__':
     main()
-
