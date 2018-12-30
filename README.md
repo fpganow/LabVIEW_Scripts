@@ -1,6 +1,8 @@
 # LabVIEW_Scripts
 Scripts to Change Bitstream Files in lvbitx
 
+[![Build Status](https://travis-ci.org/fpganow/LabVIEW_Scripts.svg?branch=master)](https://travis-ci.org/fpganow/LabVIEW_Scripts)
+
 # Summary
 Xilinx Vivado generates a bitstream file and using the memory info file it maps an executable of form .elf in to the bitstream.
 
