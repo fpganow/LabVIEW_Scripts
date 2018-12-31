@@ -124,7 +124,6 @@ def patch(inElfFile, inBitFile):
     outBitFile = inBitFile[:-3] + inElfFile + '.bit'
 
     print("Updatemem command found")
-    print(f'Out bit file: {outBitFile}')
     commandArr = [updateMem,
                   "-data", inElfFile,
                   "-bit", inBitFile,
@@ -146,7 +145,7 @@ def patch(inElfFile, inBitFile):
     return outBitFile
 
 
-def replaceBinstream(lvbitx, binFile, outLvbitxFile):
+def replaceBinstream(lvbitx, binFile):
     newBitStream = readFile(binFile)
 
     import hashlib
@@ -166,7 +165,7 @@ def replaceBinstream(lvbitx, binFile, outLvbitxFile):
     root = tree.getroot()
     root.find('BitstreamMD5').text = newMd5_str
     root.find('Bitstream').text = dataHexStrSplit
-    tree.write(outLvbitxFile)
+    tree.write(lvbitx)
 
 
 def saveToFile(fileName, binData):
@@ -235,18 +234,22 @@ def main():
         print('Exiting...')
         import sys
         sys.exit(0)
-    outLvbitxFile = lvbitxFile[:-6] + '.' + elfFile + '.lvbitx'
 
     print('')
     print('------------------------------------------')
     print(f'Patch {lvbitxFile} with {elfFile} embedded in to {bitFile}')
-    print(f'Temporary lvbitxFile {outLvbitxFile}')
 
     newBitFile = patch(elfFile, bitFile)
     newBinFile = getBinFileFromBitFile(newBitFile)
 
-    replaceBinstream(lvbitxFile, newBinFile, outLvbitxFile)
+    replaceBinstream(lvbitxFile, newBinFile)
 
+    import os
+    print(f'Cleaning up...')
+    print(f'Deleting {newBitFile}')
+    os.remove(newBitFile)
+    print(f'Deleting {newBinFile}')
+    os.remove(newBinFile)
 
 if __name__ == '__main__':
     main()
