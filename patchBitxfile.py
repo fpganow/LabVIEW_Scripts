@@ -1,5 +1,54 @@
 #!/usr/bin/python3.6
 
+class BitStreamHeader:
+    field_1 = [
+        0x00, 0x09, 
+        0x0f, 0xf0, 0x0f, 0xf0, 0x0f, 0xf0, 0x0f, 0xf0, 0x00
+        ]
+    field_2 = [
+        0x00, 0x01,
+        0x61
+        ]
+
+def getHeader(fileName=None,
+              partName=None,
+              dateString=None,
+              timeString=None,
+              deviceType=None):
+    binStream = BitStreamHeader.field_1 + BitStreamHeader.field_2
+
+    if fileName:
+        lenOfField3 = len(fileName)
+        binStream += lenOfField3.to_bytes(2, byteorder='big')
+        binStream += fileName.encode()
+        binStream += bytearray(1)
+
+    if partName:
+        lenOfField4 = len(partName)
+        binStream += [0x62]
+        binStream += lenOfField4.to_bytes(2, byteorder='big')
+        binStream += partName.encode()
+        binStream += bytearray(1)
+
+    if dateString:
+        lenOfField5 = len(dateString)
+        binStream += [0x63]
+        binStream += lenOfField5.to_bytes(2, byteorder='big')
+        binStream += dateString.encode()
+        binStream += bytearray(1)
+
+    if timeString:
+        lenOfField6 = len(timeString)
+        binStream += [0x64]
+        binStream += lenOfField6.to_bytes(2, byteorder='big')
+        binStream += timeString.encode()
+        binStream += bytearray(1)
+
+    if deviceType:
+        binStream += [0x65]
+        binStream += deviceType
+
+    return binStream
 
 def getUpdateMem():
     import os
