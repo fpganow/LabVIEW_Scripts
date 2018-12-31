@@ -1,6 +1,8 @@
 # LabVIEW_Scripts
 Scripts to Change Bitstream Files in lvbitx
 
+[![Build Status](https://travis-ci.org/fpganow/LabVIEW_Scripts.svg?branch=master)](https://travis-ci.org/fpganow/LabVIEW_Scripts)
+
 # Summary
 Xilinx Vivado generates a bitstream file and using the memory info file it maps an executable of form .elf in to the bitstream.
 
@@ -18,14 +20,12 @@ You will need the following files from your Vivado Build:
 * original memory information file (file extension .mmi)
 * a sample LabVIEW bitstream (file extension .lvbitx)
 
-
-
-Notes:
+## Notes:
 * The .mmi file should automatically be generated through your Vivado build and should be located in the runs directory
-* In may case, from the ProjectExportForVivado directory I have:
-** ProjectExportForVivado
-*** .\fpga_nic\fpga_nic.lvbitx
-*** .\fpga_nic\VivadoProject\fpga_nic.runs\impl_1\PXIe6592R_Top_Gen2x8.bit
-*** .\fpga_nic\VivadoProject\fpga_nic.runs\impl_1\PXIe6592R_Top_Gen2x8.mmi
-
-
+* In my case, from the ProjectExportForVivado directory I have:
+ * .\fpga_nic\fpga_nic.lvbitx
+ * .\fpga_nic\VivadoProject\fpga_nic.runs\impl_1\PXIe6592R_Top_Gen2x8.bit
+ * .\fpga_nic\VivadoProject\fpga_nic.runs\impl_1\PXIe6592R_Top_Gen2x8.mmi
+ 
+ ## Contributing
+ As always, Pull Requests are welcome and feel free to open an issue with any questions or feature requests.

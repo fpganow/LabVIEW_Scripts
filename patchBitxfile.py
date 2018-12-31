@@ -1,4 +1,5 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3.6
+
 
 def getUpdateMem():
     import os
@@ -11,14 +12,17 @@ def getUpdateMem():
         sys.exit(0)
     return updateMem
 
+
 def getFile(mypath, expr):
     from os import listdir
     from os.path import isfile, join
     onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(expr)]
     return onlyfiles[0]
 
+
 def getOnlyElfFile():
     return getFile('.', '.elf')
+
 
 def getOnlyBitFile():
     mypath= "."
@@ -27,16 +31,35 @@ def getOnlyBitFile():
     onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".bit")]
     return onlyfiles[0]
 
-# Offset where bin file starts in bitfile is 0x0a8
-def stripBitFileHeader(inBitFile):
+
+# binary file starts with 32 0xFFs
+# We can also parse the bitstream header and remove it
+def stripBitFileHeader(inBitStream):
+    binStartIndex = 0
+
+    for binStartIndex in range(0, len(inBitStream) - 32):
+        allEqual = True
+        for i in range(binStartIndex, binStartIndex + 31):
+            if inBitStream[i] != 0xFF:
+                allEqual = False
+                break
+        if allEqual:
+            break
+    return inBitStream[binStartIndex:]
+
+
+def getBinFileFromBitFile(inBitFile):
     print(f'Stripping Bitfile header from {inBitFile}')
     bitStream = readFile(inBitFile)
     outBinFile = inBitFile[:-4] + '.bin'
     fout = open(outBinFile, 'wb')
-    bitStream = bitStream[0xa8:]
+
+    bitStream = stripBitFileHeader(bitStream)
+
     fout.write(bitStream)
     fout.close()
     return outBinFile
+
 
 def getOnlyBitxFile():
     mypath= "."
@@ -44,6 +67,7 @@ def getOnlyBitxFile():
     from os.path import isfile, join
     onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f.endswith(".lvbitx")]
     return onlyfiles[0]
+
 
 def patch(inElfFile, inBitFile):
     updateMem = getUpdateMem()
@@ -72,6 +96,7 @@ def patch(inElfFile, inBitFile):
         print("proc.stdout = {}".format(proc.stdout.decode('utf-8')))
     return outBitFile
 
+
 def replaceBinstream(lvbitx, binFile, outLvbitxFile):
     newBitStream = readFile(binFile)
 
@@ -94,14 +119,17 @@ def replaceBinstream(lvbitx, binFile, outLvbitxFile):
     root.find('Bitstream').text = dataHexStrSplit
     tree.write(outLvbitxFile)
 
+
 def saveToFile(fileName, binData):
     binDataArray = bytearray(binData)
     with open(fileName, "wb") as fout:
         fout.write(binDataArray)
 
+
 def readFile(fileName):
     byteArray = open(fileName, "rb").read()
     return byteArray
+
 
 def main():
     print('+-----------------------------------------+')
@@ -166,7 +194,7 @@ def main():
     print(f'Temporary lvbitxFile {outLvbitxFile}')
 
     newBitFile = patch(elfFile, bitFile)
-    newBinFile = stripBitFileHeader(newBitFile)
+    newBinFile = getBinFileFromBitFile(newBitFile)
 
     replaceBinstream(lvbitxFile, newBinFile, outLvbitxFile)
 
